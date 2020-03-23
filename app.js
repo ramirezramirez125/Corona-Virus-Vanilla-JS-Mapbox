@@ -1,9 +1,13 @@
 window.addEventListener('DOMContentLoaded',initializeApp);
 
 const baseEndPoint = 'https://coronavirus-tracker-api.herokuapp.com/v2/locations';
+
+let coronaDetailsContainer;
+let countrySelectDropdown;
+
 const coronaData = {
-latest: {},
-locations: []
+  latest: {},
+  locations: []
 }
 
 mapboxgl.accessToken = 'pk.eyJ1IjoicHJhdGVlazk1MSIsImEiOiJjazg0OHNpNnYxNnNoM2htczRncmgydXlsIn0._fOmIUUD2iZtHvzv0uWGKA'
@@ -183,11 +187,43 @@ function renderMap() {
     // console.log(geoJSONCoronaData);
 }
 
+function populateLocation(country, country_code) {
+  const countryOption = document.createElement('option');
+  countryOption.value = country;
+  countryOption.textContent = `${country_code}-${country}`;
+  countrySelectDropdown.appendChild(countryOption);
+}
+
+function populateLocations() {
+  console.log(coronaData.locations);
+  const countriesWithCodes = coronaData.locations.map(location => {
+    return {
+      country: location.country,
+      country_code: location.country_code
+    }
+  });
+  console.log(countriesWithCodes);
+  const uniqueCountriesWithCodes =
+    findUniqueCountriesWithCodes(countriesWithCodes, ['country', 'country_code']);
+   console.log(uniqueCountriesWithCodes);
+  uniqueCountriesWithCodes.forEach(({ country, country_code }) => populateLocation(country, country_code));
+}
+
+function findUniqueCountriesWithCodes(countriesWithCodes, propertyNames) {
+  const keysAndValues = countriesWithCodes.map(countryWithCode => {
+    const key = propertyNames.map(propertyName => countryWithCode[propertyName]).join('|');
+    return [key, countryWithCode];
+  });
+  const map = new Map(keysAndValues);
+  return Array.from(map.values());
+}
+
 async function initializeApp() {
   console.log('inside the init method');
   setReferences();
   doEventBindings();
   await performAsyncCall();
+  populateLocations();
   // console.log(coronaData.latest, coronaData.locations);
   renderMap();
 }
@@ -206,8 +242,11 @@ async function performAsyncCall() {
 
 function setReferences() {
   // Set any references here
+  coronaDetailsContainer = document.querySelector('#corona-details');
+  countrySelectDropdown = document.querySelector('[name="select-country"]');
 }
 
 function doEventBindings() {
   // Do the event bindings here
+
 }

@@ -33,13 +33,6 @@ body {
 
 /* Table Styles */
 
-#map {
-  position: relative;
-  top: 0;
-  bottom: 0;
-  height:500px;
-  width: 500px;
-}
 
 table {
   border-radius: 5px;
@@ -60,7 +53,29 @@ td, th {
   padding: 2rem;
   background: white;
   box-shadow: 0 0 3px 5px rgba(0,0,0,0.08653);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
 }
+.container h1,
+.container h2,
+.container h3,
+.container h4,
+.container h5,
+.container h6 {
+  color: var(--black);
+  text-shadow: none;
+}
+#map {
+  /* position: relative; */
+  top: 0;
+  bottom: 0;
+  height: 500px;
+  width: 500px;
+}
+
 
 :focus {
   outline-color: var(--pink);
@@ -77,12 +92,11 @@ h6 {
   line-height: 1;
   text-shadow: var(--text-shadow);
 }
-.container h1,
-.container h2,
-.container h3,
-.container h4,
-.container h5,
-.container h6 {
-  color: var(--black);
-  text-shadow: none;
+
+ select {
+  display: block;
+  padding: 1rem;
+  margin: 20px;
+  border: 1px solid var(--grey);
+  outline: none;
 }
