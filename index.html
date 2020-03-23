@@ -6,20 +6,28 @@
   <title>Corona Virus Tracker</title>
   <link rel="stylesheet" href="base.css">
   <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.css">
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.3.0/mapbox-gl-geocoder.css" type="text/css">
+  <style>
+    #geocoder-container > div {
+      min-width:50%;
+      margin-left:25%;
+    }
+  </style>
 </head>
 <body>
 
   <div class="container">
-     <div id="map"></div>
-     <select name="select-country">
-        <!-- <option value="baba">Baddadadadaaaba</option> -->
-     </select>
-     <div id="corona-details">
+    <h1>Corona Virus Tracker</h1>
+    <div id="map"></div>
+    <select name="select-country">
+    </select>
+    <div id="corona-details">
 
-     </div>
+    </div>
   </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
   <script src="https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.js"></script>
-
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.3.0/mapbox-gl-geocoder.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

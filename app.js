@@ -182,6 +182,23 @@ const countriesWithCountryCodes = {
 }
 mapboxgl.accessToken = 'pk.eyJ1IjoicHJhdGVlazk1MSIsImEiOiJjazg0OHNpNnYxNnNoM2htczRncmgydXlsIn0._fOmIUUD2iZtHvzv0uWGKA'
 
+let geocoder;
+
+async function geocodeReverseFromLatLngToPlaceName(lat, lng) {
+  return new Promise((resolve, reject) => {
+    geocoder.mapboxClient.geocodeReverse({
+      latitude: parseFloat(lat),
+      longitude: parseFloat(lng)
+    }, function (error, response) {
+      if (error) {
+        reject(error);
+      }
+      // console.log(response.features[0]?.place_name);
+      resolve(response.features[0] && response.features[0].place_name);
+    });
+  })
+}
+
 function renderMap() {
   const map = new mapboxgl.Map({
     container: 'map',
@@ -189,7 +206,6 @@ function renderMap() {
     center: [-99.9, 41.5],
     zoom: 1
   });
-
   // Data is of the form
 
   // coordinates: { latitude: "15", longitude: "101" }
@@ -202,8 +218,13 @@ function renderMap() {
 
   // Add zoom and rotation controls to the map.
   map.addControl(new mapboxgl.NavigationControl());
+  // Geocoder
+  geocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken
+  });
+  map.addControl(geocoder);
 
-  map.on('load', function () {
+  map.on('load', async function () {
     map.addSource('places', {
       "type": "geojson",
       "data": {
@@ -214,14 +235,18 @@ function renderMap() {
             "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
           }
         },
-        "features": coronaData.locations.map(location => {
+        "features": await Promise.all(coronaData.locations.map(async location => {
+          // Do reverse geocoding
+          const placeName = await geocodeReverseFromLatLngToPlaceName(location.coordinates.latitude, location.coordinates.longitude);
+          // console.log('got the name of the place from reverse geocoding',placeName);
+          console.log(placeName);
           return {
             "type": "Feature",
             "properties": {
-            "description": `
+              "description": `
                 <table>
                   <thead>
-                    <tr>${location.country}</tr>
+                    <tr>${placeName}</tr>
                   </thead>
                   <tbody>
                     <tr>
@@ -256,8 +281,8 @@ function renderMap() {
                 `${location.coordinates.latitude}`
               ]
             }
-          }
-        })
+          };
+        }))
       },
       cluster: true,
       clusterMaxZoom: 14,
@@ -366,37 +391,17 @@ function populateLocation(country, country_code) {
 function populateLocations() {
   Object.entries(countriesWithCountryCodes).forEach(([country_code, country]) => populateLocation(country, country_code));
 }
-// The below approach is good but it would require some computation
-// that will take some time to render the data on the UI
-// Better is to create an object of all the locations up front.
-
-// function populateLocations() {
-//   const countriesWithCodes = coronaData.locations
-//     .map(({ country, country_code }) =>  ({ country, country_code }));
-//   const uniqueCountriesWithCodes =
-//     findUniqueCountriesWithCodes(countriesWithCodes, ['country', 'country_code']);
-//   console.log(uniqueCountriesWithCodes);
-//   uniqueCountriesWithCodes.forEach(({ country, country_code }) => populateLocation(country, country_code));
-
-// }
-
-// function findUniqueCountriesWithCodes(countriesWithCodes, propertyNames) {
-//   const keysAndValues = countriesWithCodes.map(countryWithCode => {
-//     const key = propertyNames.map(propertyName => countryWithCode[propertyName]).join('|');
-//     return [key, countryWithCode];
-//   });
-//   const map = new Map(keysAndValues);
-//   return Array.from(map.values());
-// }
 
 async function initializeApp() {
   console.log('inside the init method');
   setReferences();
   doEventBindings();
+  NProgress.start();
   populateLocations();
   await performAsyncCall();
   // console.log(coronaData.latest, coronaData.locations);
   renderMap();
+  NProgress.done();
 }
 
 
@@ -417,7 +422,66 @@ function setReferences() {
   countrySelectDropdown = document.querySelector('[name="select-country"]');
 }
 
+function renderUI(details) {
+
+  console.log(details);
+  const {
+    coordinates: {
+      latitude,
+      longitude
+    },
+    country,
+    country_code,
+    last_updated,
+    latest: {
+      confirmed,
+      deaths,
+      recovered
+    }
+  } = details;
+  let html = '';
+  html = `
+   <table class="table">
+     <thead>
+       <tr>
+         ${country}(${country_code})
+       </tr>
+     </thead>
+     <tbody>
+       <tr>
+         <td>Latitude:</td>
+         <td>${latitude}</td>
+       </tr>
+       <tr>
+         <td>Longitude:</td>
+         <td>${longitude}</td>
+         </tr>
+         <tr>
+           <td class="cases">Reported Cases:</td>
+           <td>${confirmed}</td>
+         </tr>
+       <tr>
+         <td class="deaths">Deaths:</td>
+         <td>${deaths}</td>
+       </tr>
+       <tr>
+         <td class="recovered">Recovered:</td>
+         <td>${recovered}</td>
+       </tr>
+     </tbody>
+   </table>
+  `
+  coronaDetailsContainer.innerHTML = html;
+}
+
+function getDetailsForSelectedLocation(event) {
+  const countrySelected = event.target.value;
+  const locationCoronaDetails = coronaData.locations.find(location => location.country === countrySelected);
+  renderUI(locationCoronaDetails);
+}
+
+
 function doEventBindings() {
   // Do the event bindings here
-
+  countrySelectDropdown.addEventListener('change', getDetailsForSelectedLocation);
 }
