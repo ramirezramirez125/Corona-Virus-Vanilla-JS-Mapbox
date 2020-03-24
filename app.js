@@ -4,6 +4,7 @@ const baseEndPoint = 'https://coronavirus-tracker-api.herokuapp.com/v2/locations
 
 let coronaDetailsContainer;
 let countrySelectDropdown;
+let coronaWorldDetailsContainer;
 
 const coronaData = {
   latest: {},
@@ -216,13 +217,13 @@ function renderMap() {
   // latest: { confirmed: 599, deaths: 1, recovered: 44 }
 
 
-  // Add zoom and rotation controls to the map.
-  map.addControl(new mapboxgl.NavigationControl());
   // Geocoder
   geocoder = new MapboxGeocoder({
     accessToken: mapboxgl.accessToken
   });
   map.addControl(geocoder);
+  // Add zoom and rotation controls to the map.
+  map.addControl(new mapboxgl.NavigationControl());
 
   map.on('load', async function () {
     map.addSource('places', {
@@ -399,6 +400,7 @@ async function initializeApp() {
   NProgress.start();
   populateLocations();
   await performAsyncCall();
+  renderUI(coronaData.latest,true);
   // console.log(coronaData.latest, coronaData.locations);
   renderMap();
   NProgress.done();
@@ -420,58 +422,70 @@ function setReferences() {
   // Set any references here
   coronaDetailsContainer = document.querySelector('#corona-details');
   countrySelectDropdown = document.querySelector('[name="select-country"]');
+  coronaWorldDetailsContainer = document.querySelector('#corona-world-details');
 }
 
-function renderUI(details) {
+function renderUI(details,world=false) {
 
-  console.log(details);
-  const {
-    coordinates: {
-      latitude,
-      longitude
-    },
-    country,
-    country_code,
-    last_updated,
-    latest: {
-      confirmed,
-      deaths,
-      recovered
-    }
-  } = details;
+  // console.log(details);
+  // const {
+  //   coordinates: {
+  //     latitude,
+  //     longitude
+  //   },
+  //   country,
+  //   country_code,
+  //   last_updated,
+  //   latest: {
+  //     confirmed,
+  //     deaths,
+  //     recovered
+  //   }
+  // } = details;
+
+  // if (world) {
+
+  // }
+
   let html = '';
   html = `
    <table class="table">
      <thead>
-       <tr>
-         ${country}(${country_code})
-       </tr>
+        ${world ? `<h1>World Details</h1>` : (
+           `<tr>${details.country}(${details.country_code})</tr>`
+         )}
      </thead>
      <tbody>
-       <tr>
+      ${!world ?  (
+      `<tr>
          <td>Latitude:</td>
-         <td>${latitude}</td>
+         <td>${details.coordinates.latitude}</td>
        </tr>
        <tr>
          <td>Longitude:</td>
-         <td>${longitude}</td>
-         </tr>
+         <td>${details.coordinates.longitude}</td>
+       </tr>`
+        ) : ' '}
          <tr>
            <td class="cases">Reported Cases:</td>
-           <td>${confirmed}</td>
+           <td>${world ? details.confirmed : details.latest.confirmed}</td>
          </tr>
        <tr>
          <td class="deaths">Deaths:</td>
-         <td>${deaths}</td>
+         <td>${world ? details.deaths : details.latest.deaths}</td>
        </tr>
        <tr>
          <td class="recovered">Recovered:</td>
-         <td>${recovered}</td>
+         <td>${world ? details.recovered : details.latest.recovered}</td>
        </tr>
      </tbody>
    </table>
   `
-  coronaDetailsContainer.innerHTML = html;
+  if (world) {
+    coronaWorldDetailsContainer.innerHTML = html;
+  } else {
+    coronaDetailsContainer.innerHTML = html;
+  }
 }
 
 function getDetailsForSelectedLocation(event) {
